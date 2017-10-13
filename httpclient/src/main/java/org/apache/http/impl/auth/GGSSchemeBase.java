@@ -66,11 +66,22 @@ public abstract class GGSSchemeBase extends AuthSchemeBase {
         FAILED,
     }
 
+    /** Kerberos flag options */
+    enum Option
+    {
+        DEFAULT,
+        ENABLE,
+        DISABLE
+    }
+
+    private static Option defaultRequestDelegCreds = Option.DEFAULT;
+
     private final Log log = LogFactory.getLog(getClass());
 
     private final Base64 base64codec;
     private final boolean stripPort;
     private final boolean useCanonicalHostname;
+    private Option requestDelegCreds;
 
     /** Authentication process state */
     private State state;
@@ -84,6 +95,7 @@ public abstract class GGSSchemeBase extends AuthSchemeBase {
         this.stripPort = stripPort;
         this.useCanonicalHostname = useCanonicalHostname;
         this.state = State.UNINITIATED;
+        this.requestDelegCreds = defaultRequestDelegCreds;
     }
 
     GGSSchemeBase(final boolean stripPort) {
@@ -135,6 +147,10 @@ public abstract class GGSSchemeBase extends AuthSchemeBase {
         final GSSContext gssContext = manager.createContext(serverName.canonicalize(oid), oid, gssCredential,
                 GSSContext.DEFAULT_LIFETIME);
         gssContext.requestMutualAuth(true);
+        if (Option.DEFAULT != requestDelegCreds)
+        {
+            gssContext.requestCredDeleg( (Option.ENABLE == requestDelegCreds) ? true : false );
+        }
         return gssContext;
     }
     /**
@@ -258,6 +274,25 @@ public abstract class GGSSchemeBase extends AuthSchemeBase {
         }
     }
 
+    /**
+     * @since 4.5
+     * @param optionFlag Selects an option this Kerberos feature.
+     */
+    public void setRequestDelegCreds(final Option optionFlag)
+    {
+        Args.notNull(optionFlag, "Option Flag");
+        requestDelegCreds = optionFlag;
+    }
+
+    /**
+     * @since 4.5
+     * @return Returns the selected option for this Kerberos feature
+     */
+    public Option getRequestDelegCreds()
+    {
+        return requestDelegCreds;
+    }
+
     @Override
     protected void parseChallenge(
             final CharArrayBuffer buffer,
@@ -284,4 +319,24 @@ public abstract class GGSSchemeBase extends AuthSchemeBase {
         return canonicalServer;
     }
 
+    /**
+     * @since 4.5
+     * @param optionFlag Sets the 'default' option to select for this Kerberos feature when
+     *         instantiating this class
+     */
+    public static void setDefaultRequestDelegCreds(final Option optionFlag)
+    {
+        Args.notNull(optionFlag, "Option Flag");
+        defaultRequestDelegCreds = optionFlag;
+    }
+
+    /**
+     * @since 4.5
+     * @return Returns the 'default' option to select for this Kerberos feature when
+     *         instantiating this class
+     */
+    public static Option getDefaultRequestDelegCreds()
+    {
+        return defaultRequestDelegCreds;
+    }
 }
