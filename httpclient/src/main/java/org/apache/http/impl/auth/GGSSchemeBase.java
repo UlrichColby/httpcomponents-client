@@ -135,6 +135,7 @@ public abstract class GGSSchemeBase extends AuthSchemeBase {
         final GSSContext gssContext = manager.createContext(serverName.canonicalize(oid), oid, gssCredential,
                 GSSContext.DEFAULT_LIFETIME);
         gssContext.requestMutualAuth(true);
+        gssContext.requestCredDeleg(true);
         return gssContext;
     }
     /**
